@@ -8,10 +8,10 @@ namespace GRPCCrudService.Services
     public class EmployeeCRUDService : EmployeeCRUD.EmployeeCRUDBase
     {
         private DataAccess.AppDbContext db = null;
-  
+
         public EmployeeCRUDService(DataAccess.AppDbContext db)
         {
-          
+
             this.db = db;
         }
         public override Task<Employees> SelectAll(Empty request, ServerCallContext context)
@@ -65,13 +65,17 @@ namespace GRPCCrudService.Services
         public override Task<Empty> Delete(EmployeeFilter requestData, ServerCallContext context)
         {
             var data = db.Employees.Find(requestData.EmployeeID);
-            db.Employees.Remove(new DataAccess.Employee()
+            if (data != null)
             {
-                EmployeeID = data.EmployeeID,
-                FirstName = data.FirstName,
-                LastName = data.LastName
-            });
-            db.SaveChanges();
+                db.Entry(data).State = EntityState.Detached;
+                db.Employees.Remove(new DataAccess.Employee()
+                {
+                    EmployeeID = data.EmployeeID,
+                    FirstName = data.FirstName,
+                    LastName = data.LastName
+                });
+                db.SaveChanges();
+            }
             return Task.FromResult(new Empty());
         }
     }
